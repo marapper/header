@@ -1,0 +1,90 @@
+{namespace backbase_com_2012_aurora}
+
+/**
+ * Хелпер для отображения ссылок
+ *
+ * - в продакшне - as is
+ * - только для локальных абсолютных: с /portalserver/текущий_портал для того, чтобы можно было переходить прямо в в cxp-manager
+ * (сработает только, если страницы есть в портале по этому урлу)
+ *
+ * @param url
+ */
+{template .LinkUrl}
+    {if $url and $ij.designmode and matches($url, '^/[^/].+$')}
+        {$ij.portalContextRoot}/{$ij.link.contextItemName}{$url}
+    {else}
+        {$url ?: '#'}
+    {/if}
+{/template}
+
+/**
+ * Хелпер для отображения ссылок
+ *
+ * только в лайве
+ * открытие в новой вкладке, rel для безопасности переходов с сайта
+ *
+ * @param url
+ */
+{template .LinkAttributes}
+    {sp}
+    {if $url and not $ij.designmode and (matches($url, '^https?://.+$') or matches($url, '^//.+$'))}
+        rel="noopener noreferrer" target="_blank"
+    {/if}
+    {sp}
+{/template}
+
+
+/**
+ * Шаблон Предупреждения о куках
+ *
+ * @param cookieWarningData
+ * @param lang - язык раздела
+ */
+{template .CookieWarning}
+    {if $cookieWarningData and length($cookieWarningData) > 0}
+        {let $currentLang: $lang ?: 'ru' /}
+        // инлайново - чтобы не появлялось в сёрче поисковиков в том числе
+        <div class="kitt-cookie-warning" style="display: none">
+            <div class="kitt-cookie-warning__content">
+                <p class="kitt-cookie-warning__text">
+                    {foreach $item in $cookieWarningData}
+                        {if $item.language == $currentLang and $item.propertyName == 'pers_notice'}
+                            {$item.propertyValue|noAutoescape}
+                        {/if}
+                        {if $item.language == $currentLang and $item.propertyName == 'pers_notice_hint'}
+                            {sp}
+                            {$item.propertyValue|noAutoescape}
+                        {/if}
+                    {/foreach}
+                </p>
+                <button class="kitt-cookie-warning__close">
+                    {foreach $item in $cookieWarningData}
+                        {if $item.language == $currentLang and $item.propertyName == 'pers_notice_action'}
+                            {$item.propertyValue}
+                        {/if}
+                    {/foreach}
+                </button>
+            </div>
+        </div>
+    {/if}
+{/template}
+
+
+/**
+ * Пример подключения в базовом шаблоне
+ *
+ * @param data Переменные из запроса на /proxy/services/dict-services/serviceProperty/list?serviceName=CookiesWarning
+ *
+ */
+{template .Standard_Widget}
+    {if $ij.section.sectionInfoEntityId and $ij.sectionInfo}
+        {if $ij.section.isNewDesign}
+            {call .CookieWarning}
+                {param cookieWarningData: $data /}
+                {param lang: $ij.section.lang /}
+            {/call}
+        {else}
+            // old bc
+        {/if}
+    {/if}
+{/template}
